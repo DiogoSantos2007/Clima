@@ -1,0 +1,34 @@
+﻿@using System.Net.Http.Json
+@using MudBlazor
+@using Clima.Models
+@inject HttpClient httpClient
+@using static MudBlazor.CategoryTypes;
+
+<MudDataGrid Items="@registos" Filterable="true" FilterMode="@_filterMode" FilterCaseSensitivity="@_caseSensitivity">
+    <Columns>
+        <PropertyColumn Property="x => x.ID_registo" Title="ID" Filterable="false" />
+        <PropertyColumn Property="x => x.temperatura" Title="Temperatura" />
+        <PropertyColumn Property="x => x.humidade" Title="Humidade" />
+        <PropertyColumn Property="x => x.risco_temperatura" Filterable="true" Title="Risco Temperatura" />
+        <PropertyColumn Property="x => x.risco_humidade" Title="Risco Humidade" />
+        <PropertyColumn Property="x => x.data_registo" Title="Data e hora" />
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="Tb_registos" />
+    </PagerContent>
+</MudDataGrid>
+
+<div class="d-flex flex-wrap mt-4">
+    <MudRadioGroup T="DataGridFilterMode" @bind-Value="@_filterMode">
+        <MudRadio Dense="true" Value="@DataGridFilterMode.Simple" Color="Color.Primary">Simple</MudRadio>
+        <MudRadio Dense="true" Value="@DataGridFilterMode.ColumnFilterMenu" Color="Color.Tertiary">Column Menu</MudRadio>
+        <MudRadio Dense="true" Value="@DataGridFilterMode.ColumnFilterRow">Column Row</MudRadio>
+    </MudRadioGroup>
+</div>
+
+<div class="d-flex flex-wrap mt-4">
+    <MudRadioGroup T="DataGridFilterCaseSensitivity" @bind-Value="@_caseSensitivity">
+        <MudRadio Dense="true" Value="@DataGridFilterCaseSensitivity.Default" Color="Color.Primary">Default Case Sensitivity</MudRadio>
+        <MudRadio Dense="true" Value="@DataGridFilterCaseSensitivity.CaseInsensitive" Color="Color.Tertiary">Case Insensitive</MudRadio>
+    </MudRadioGroup>
+</div>
