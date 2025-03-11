@@ -1,0 +1,92 @@
+﻿@using Clima.Models
+
+<MudDialog>
+    <DialogContent>
+        @if (Record != null)
+        {
+            <MudCard Elevation="0">
+                <MudCardContent>
+                    <MudGrid>
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.h6" Class="mb-4">Record #@Record.ID_registo</MudText>
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudTimeline TimelinePosition="TimelinePosition.Start">
+                                <MudTimelineItem Color="Color.Primary" Size="Size.Medium">
+                                    <ItemContent>
+                                        <MudText Typo="Typo.h6">Date & Time</MudText>
+                                        <MudText>@Record.data_registo.ToString("F")</MudText>
+                                    </ItemContent>
+                                </MudTimelineItem>
+
+                                <MudTimelineItem Color="GetTemperatureColor(Record.risco_temperatura)" Size="Size.Medium">
+                                    <ItemContent>
+                                        <MudText Typo="Typo.h6">Temperature</MudText>
+                                        <MudText Typo="Typo.body1">@Record.temperatura.ToString("F1") °C</MudText>
+                                        <MudAlert Severity="GetSeverity(Record.risco_temperatura)" Variant="Variant.Filled"
+                                                  Dense="true" Class="mt-2">
+                                            Risk Level: @Record.risco_temperatura
+                                        </MudAlert>
+                                    </ItemContent>
+                                </MudTimelineItem>
+
+                                <MudTimelineItem Color="GetHumidityColor(Record.risco_humidade)" Size="Size.Medium">
+                                    <ItemContent>
+                                        <MudText Typo="Typo.h6">Humidity</MudText>
+                                        <MudText Typo="Typo.body1">@Record.humidade.ToString("F1") %</MudText>
+                                        <MudAlert Severity="GetSeverity(Record.risco_humidade)" Variant="Variant.Filled"
+                                                  Dense="true" Class="mt-2">
+                                            Risk Level: @Record.risco_humidade
+                                        </MudAlert>
+                                    </ItemContent>
+                                </MudTimelineItem>
+                            </MudTimeline>
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+        }
+        else
+        {
+            <MudText>No record data available.</MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Close">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public Tb_registos? Record { get; set; }
+
+    private void Close() => MudDialog.Close();
+
+    private Color GetTemperatureColor(int riskLevel) => riskLevel switch
+    {
+        0 => Color.Success,
+        1 => Color.Info,
+        2 => Color.Warning,
+        3 => Color.Error,
+        _ => Color.Default
+    };
+
+    private Color GetHumidityColor(int riskLevel) => riskLevel switch
+    {
+        0 => Color.Success,
+        1 => Color.Info,
+        2 => Color.Warning,
+        3 => Color.Error,
+        _ => Color.Default
+    };
+
+    private Severity GetSeverity(int riskLevel) => riskLevel switch
+    {
+        0 => Severity.Success,
+        1 => Severity.Info,
+        2 => Severity.Warning,
+        3 => Severity.Error,
+        _ => Severity.Normal
+    };
+}

@@ -1,6 +1,7 @@
 using Clima.Components;
 using Clima.Data;
 using Microsoft.AspNetCore.Builder;
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,23 @@ builder.Services.AddRazorComponents()
 builder.Services.AddSingleton<AppDbContext>();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        builder => builder
+            .AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader());
+});
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ListenAnyIP(7205, options =>
+    {
+        options.UseHttps(); // for HTTPS
+    });
+    serverOptions.ListenAnyIP(5128);
+}); 
+builder.Services.AddMudServices();
 var app = builder.Build();
 
 app.MapDefaultEndpoints();
@@ -24,8 +42,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
-
 
 app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "v1"));
@@ -35,5 +51,7 @@ app.MapStaticAssets();
 app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+// And later in the configuration:
+app.UseCors("AllowAll");
 
 app.Run();

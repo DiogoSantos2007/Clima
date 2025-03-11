@@ -1,0 +1,315 @@
+﻿@page "/registos"
+@using Clima.Components.Pages.Dialogs
+@using Clima.Data
+@using Clima.Models
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext DbContext
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Climate Data Monitoring</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
+    <MudText Typo="Typo.h3" Class="mb-6 text-center">Climate Monitoring Dashboard</MudText>
+
+    <!-- Latest Readings and Statistics Cards -->
+    <MudGrid>
+        <!-- Latest Readings -->
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="8" Class="rounded-lg mb-6 h-full">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h5">Latest Readings</MudText>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudIcon Icon="@Icons.Material.Filled.Update" />
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent>
+                    @if (latestRecord != null)
+                    {
+                        <MudGrid>
+                            <MudItem xs="12" md="6">
+                                <MudPaper Elevation="0" Class="pa-4 rounded-lg border-1 mb-3" Style="border-style: solid; border-color: rgba(0,0,0,0.12);">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Style="height:100%;">
+                                        <MudIcon Icon="@Icons.Material.Filled.Thermostat" Color="@GetTemperatureColor(latestRecord.risco_temperatura)" Size="Size.Large" Class="mr-3" />
+                                        <MudStack Spacing="0">
+                                            <MudText Typo="Typo.subtitle1">Temperature</MudText>
+                                            <MudText Typo="Typo.h4" Color="@GetTemperatureColor(latestRecord.risco_temperatura)">
+                                                @latestRecord.temperatura.ToString("F1") °C
+                                            </MudText>
+                                            <MudChip Color="@GetTemperatureColor(latestRecord.risco_temperatura)" Size="Size.Small" Class="mt-1" T="string">
+                                                Risk Level: @latestRecord.risco_temperatura
+                                            </MudChip>
+                                        </MudStack>
+                                    </MudStack>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudPaper Elevation="0" Class="pa-4 rounded-lg border-1 mb-3" Style="border-style: solid; border-color: rgba(0,0,0,0.12);">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center">
+                                        <MudIcon Icon="@Icons.Material.Filled.WaterDrop" Color="@GetHumidityColor(latestRecord.risco_humidade)" Size="Size.Large" Class="mr-3" />
+                                        <MudStack Spacing="0">
+                                            <MudText Typo="Typo.subtitle1">Humidity</MudText>
+                                            <MudText Typo="Typo.h4" Color="@GetHumidityColor(latestRecord.risco_humidade)">
+                                                @latestRecord.humidade.ToString("F1") %
+                                            </MudText>
+                                            <MudChip Color="@GetHumidityColor(latestRecord.risco_humidade)" Size="Size.Small" Class="mt-1" T="string">
+                                                Risk Level: @latestRecord.risco_humidade
+                                            </MudChip>
+                                        </MudStack>
+                                    </MudStack>
+                                </MudPaper>
+                            </MudItem>
+                        </MudGrid>
+                        <MudText Typo="Typo.body2" Class="mt-3 d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.AccessTime" Size="Size.Small" Class="mr-2" />
+                            Last Updated: @latestRecord.data_registo.ToString("g")
+                        </MudText>
+                    }
+                    else
+                    {
+                        <MudSkeleton Width="100%" Height="160px" Animation="Animation.Pulse" />
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- Statistics -->
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="8" Class="rounded-lg mb-6 h-full">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h5">Statistics</MudText>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudIcon Icon="@Icons.Material.Filled.Analytics" />
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent>
+                    @if (statistics != null)
+                    {
+                        <MudPaper Elevation="0" Class="pa-4 rounded-lg border-1 mb-3" Style="border-style: solid; border-color: rgba(0,0,0,0.12);">
+                            <MudGrid>
+                                <MudItem xs="6">
+                                    <MudStack>
+                                        <MudText Typo="Typo.caption" Color="Color.Primary"><MudIcon Icon="@Icons.Material.Filled.Numbers" Size="Size.Small" Class="mr-1" />Total Records</MudText>
+                                        <MudText Typo="Typo.h6">@statistics.TotalRecords</MudText>
+                                    </MudStack>
+                                </MudItem>
+                                <MudItem xs="6">
+                                    <MudStack>
+                                        <MudText Typo="Typo.caption" Color="Color.Primary"><MudIcon Icon="@Icons.Material.Filled.DateRange" Size="Size.Small" Class="mr-1" />Date Range</MudText>
+                                        <MudText Typo="Typo.h6">@statistics.DateRange</MudText>
+                                    </MudStack>
+                                </MudItem>
+                            </MudGrid>
+                        </MudPaper>
+
+                        <MudGrid>
+                            <MudItem xs="12" md="6">
+                                <MudPaper Elevation="0" Class="pa-4 rounded-lg border-1" Style="border-style: solid; border-color: rgba(0,0,0,0.12);">
+                                    <MudText Typo="Typo.subtitle2" Color="Color.Primary">Temperature Statistics</MudText>
+                                    <MudDivider Class="my-2" />
+                                    <MudStack>
+                                        <MudText Typo="Typo.body2"><MudIcon Icon="@Icons.Material.Filled.Calculate" Size="Size.Small" Class="mr-1" /> Average: <b>@statistics.AvgTemperature.ToString("F1") °C</b></MudText>
+                                        <MudText Typo="Typo.body2"><MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" Class="mr-1" Color="Color.Error" /> Maximum: <b>@statistics.MaxTemperature.ToString("F1") °C</b></MudText>
+                                        <MudText Typo="Typo.body2"><MudIcon Icon="@Icons.Material.Filled.TrendingDown" Size="Size.Small" Class="mr-1" Color="Color.Info" /> Minimum: <b>@statistics.MinTemperature.ToString("F1") °C</b></MudText>
+                                    </MudStack>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudPaper Elevation="0" Class="pa-4 rounded-lg border-1" Style="border-style: solid; border-color: rgba(0,0,0,0.12);">
+                                    <MudText Typo="Typo.subtitle2" Color="Color.Primary">Humidity Statistics</MudText>
+                                    <MudDivider Class="my-2" />
+                                    <MudStack>
+                                        <MudText Typo="Typo.body2"><MudIcon Icon="@Icons.Material.Filled.Calculate" Size="Size.Small" Class="mr-1" /> Average: <b>@statistics.AvgHumidity.ToString("F1") %</b></MudText>
+                                        <MudText Typo="Typo.body2"><MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" Class="mr-1" Color="Color.Error" /> Maximum: <b>@statistics.MaxHumidity.ToString("F1") %</b></MudText>
+                                        <MudText Typo="Typo.body2"><MudIcon Icon="@Icons.Material.Filled.TrendingDown" Size="Size.Small" Class="mr-1" Color="Color.Info" /> Minimum: <b>@statistics.MinHumidity.ToString("F1") %</b></MudText>
+                                    </MudStack>
+                                </MudPaper>
+                            </MudItem>
+                        </MudGrid>
+                    }
+                    else
+                    {
+                        <MudSkeleton Width="100%" Height="160px" Animation="Animation.Pulse" />
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Climate Records Section -->
+    <MudCard Elevation="8" Class="rounded-lg mb-6">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h5">Climate Records</MudText>
+            </CardHeaderContent>
+            <CardHeaderActions>
+                <MudTooltip Text="Export Data">
+                    <MudIconButton Icon="@Icons.Material.Filled.FileDownload" Color="Color.Default" OnClick="DownloadExcel"/>
+                </MudTooltip>
+                <MudTooltip Text="Refresh Data">
+                    <MudIconButton Icon="@Icons.Material.Filled.Refresh" Color="Color.Default" OnClick="LoadData"/>
+                </MudTooltip>
+            </CardHeaderActions>
+        </MudCardHeader>
+        
+        <MudCardContent>
+            <!-- Filters Section -->
+            <MudExpansionPanels DisableBorders="true" Elevation="0" Class="mb-4">
+                <MudExpansionPanel Text="Filters" Icon="@Icons.Material.Filled.FilterList" IsInitiallyExpanded="true">
+                    <MudGrid>
+                        <MudItem xs="12" md="4">
+                            <MudDateRangePicker Label="Data"
+                                               @bind-DateRange="dateRange" 
+                                               AdornmentIcon="@Icons.Material.Filled.DateRange" />
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudSelect T="int" Label="Temperature Risk" Class="mt-0" 
+                                      @bind-Value="tempRiskFilter" AdornmentIcon="@Icons.Material.Filled.Thermostat">
+                                <MudSelectItem Value="-1">All Levels</MudSelectItem>
+                                <MudSelectItem Value="0">No Risk (0)</MudSelectItem>
+                                <MudSelectItem Value="1">Low Risk (1)</MudSelectItem>
+                                <MudSelectItem Value="2">Medium Risk (2)</MudSelectItem>
+                                <MudSelectItem Value="3">High Risk (3)</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudSelect T="int" Label="Humidity Risk" Class="mt-0" 
+                                      @bind-Value="humidRiskFilter" AdornmentIcon="@Icons.Material.Filled.WaterDrop">
+                                <MudSelectItem Value="-1">All Levels</MudSelectItem>
+                                <MudSelectItem Value="0">No Risk (0)</MudSelectItem>
+                                <MudSelectItem Value="1">Low Risk (1)</MudSelectItem>
+                                <MudSelectItem Value="2">Medium Risk (2)</MudSelectItem>
+                                <MudSelectItem Value="3">High Risk (3)</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="2" Class="d-flex align-center justify-end">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                                     StartIcon="@Icons.Material.Filled.Search" FullWidth="true"
+                                     OnClick="ApplyFilters">
+                                Apply Filters
+                            </MudButton>
+                        </MudItem>
+                    </MudGrid>
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+
+            <!-- Data Table -->
+            <MudTable Items="@registos" Dense="true" Hover="true" Bordered="false" Striped="true" Elevation="0"
+                     Loading="@loading" LoadingProgressColor="Color.Primary" Height="450px" 
+                     Breakpoint="Breakpoint.Sm" Class="rounded-lg">
+                <ToolBarContent>
+                    <MudText Typo="Typo.subtitle1" Class="mud-text-secondary py-2">
+                        <MudIcon Icon="@Icons.Material.Filled.ListAlt" Size="Size.Small" Class="mr-1" />
+                        Total Records: @registos.Count
+                    </MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="searchString" Placeholder="Search records..." Adornment="Adornment.Start"
+                                 AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh>ID</MudTh>
+                    <MudTh>Date & Time</MudTh>
+                    <MudTh>Temperature (°C)</MudTh>
+                    <MudTh>Temp. Risk</MudTh>
+                    <MudTh>Humidity (%)</MudTh>
+                    <MudTh>Humid. Risk</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="ID">@context.ID_registo</MudTd>
+                    <MudTd DataLabel="Date & Time">
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                            <MudIcon Icon="@Icons.Material.Filled.Event" Size="Size.Small" Class="mr-2" />
+                            @context.data_registo.ToString("g")
+                        </MudStack>
+                    </MudTd>
+                    <MudTd DataLabel="Temperature">
+                        <MudText Color="@GetTemperatureColor(context.risco_temperatura)">
+                            @context.temperatura.ToString("F1")
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Temp. Risk">
+                        <MudChip Size="Size.Small" Color="@GetTemperatureColor(context.risco_temperatura)"  T="string"
+                               Class="ma-0 px-2 py-1">
+                            @context.risco_temperatura
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Humidity">
+                        <MudText Color="@GetHumidityColor(context.risco_humidade)">
+                            @context.humidade.ToString("F1")
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Humid. Risk">
+                        <MudChip Size="Size.Small" Color="@GetHumidityColor(context.risco_humidade)" T="string"
+                               Class="ma-0 px-2 py-1">
+                            @context.risco_humidade
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Actions">
+                        <MudTooltip Text="View Details">
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Primary"
+                                         OnClick="@(() => ViewDetails(context))"/>
+                        </MudTooltip>
+                        <MudTooltip Text="Delete Record">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                         OnClick="@(() => DeleteRecord(context))"/>
+                        </MudTooltip>
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Class="pa-4 d-flex justify-center align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.SearchOff" Class="mr-2" /> No records found matching your criteria.
+                    </MudText>
+                </NoRecordsContent>
+                <LoadingContent>
+                    <MudText Class="pa-4 d-flex justify-center align-center">
+                        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Small" Class="mr-2" />
+                        Loading climate data...
+                    </MudText>
+                </LoadingContent>
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" RowsPerPageString="P/pág" />
+                </PagerContent>
+            </MudTable>
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
+
+<script>
+        window.downloadFileFromStream = (fileName, contentType, base64Data) => {
+        // Create a link element
+        const link = document.createElement('a');
+
+        // Create blob from base64 data
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: contentType });
+
+        // Create download URL
+        const url = URL.createObjectURL(blob);
+
+        // Set link properties
+        link.href = url;
+        link.download = fileName;
+
+        // Append to the body temporarily
+        document.body.appendChild(link);
+
+        // Trigger download
+        link.click();
+
+        // Cleanup
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+</script>

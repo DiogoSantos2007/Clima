@@ -10,26 +10,28 @@ namespace Clima.Controllers
     public class Clima(AppDbContext appDbContext) : ControllerBase
     {
         [HttpPost]
-        public async Task<IActionResult> InsertValues(int temperatura, int humidade, int risco_temperatura, int risco_humidade)
+        public async Task<IActionResult> InsertValues([FromBody] Tb_registos climaData)
         {
             try
             {
-                Tb_registos novo = new()
-                {
-                    temperatura = temperatura,
-                    humidade = humidade,
-                    risco_humidade = risco_humidade,
-                    risco_temperatura = risco_temperatura,
-                };
-                await appDbContext.Tb_Registos.AddAsync(novo);
+                Console.WriteLine("Novo Registo");
+                Console.WriteLine($"Temperatura: {climaData.temperatura}");
+                Console.WriteLine($"Humidade: {climaData.humidade}");
+                Console.WriteLine($"Risco Temperatura: {climaData.risco_temperatura}");
+                Console.WriteLine($"Risco Humidade: {climaData.risco_humidade}");
+
+
+                await appDbContext.Tb_Registos.AddAsync(climaData);
                 await appDbContext.SaveChangesAsync();
-                return Ok();
+                return Ok("Sucesso");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
                 return BadRequest();
             }
         }
+
+
     }
 }
