@@ -13,7 +13,7 @@ namespace Clima.Models
         public int risco_humidade { get; set; }
         public double risco_incendio { get; set; }
         public double radiacao { get; set; }
-        public int humidade_solo { get; set; }
+        public double humidade_solo { get; set; }
         public int risco_humidade_solo { get; set; }
         public DateTime data_registo { get; set; } = DateTime.Now;
     }

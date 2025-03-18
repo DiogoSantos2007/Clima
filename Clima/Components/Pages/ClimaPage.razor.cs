@@ -253,12 +253,12 @@ namespace Clima.Components.Pages
 
                 row++;
                 worksheet.Cell(row, 1).Value = "Average Humidity:";
-                worksheet.Cell(row, 2).Value = data.Count > 0 ? data.Average(r => r.humidade) : 0;
+                worksheet.Cell(row, 2).Value = data.Count > 0 ? data.Average(r => r.humidade)/100 : 0;
                 worksheet.Cell(row, 2).Style.NumberFormat.Format = "0.00 %";
 
                 row++;
                 worksheet.Cell(row, 1).Value = "Average Soil Humidity:"; // Added soil humidity summary
-                worksheet.Cell(row, 2).Value = data.Count > 0 ? data.Average(r => r.humidade_solo) : 0;
+                worksheet.Cell(row, 2).Value = data.Count > 0 ? data.Average(r => r.humidade_solo)/100 : 0;
                 worksheet.Cell(row, 2).Style.NumberFormat.Format = "0.00 %";
 
                 row++;
