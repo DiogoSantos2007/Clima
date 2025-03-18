@@ -1,0 +1,406 @@
+﻿@page "/dash"
+@using System.Globalization
+@using System.Linq
+@using Clima.Data
+@using Clima.Models
+@using Microsoft.EntityFrameworkCore
+@inject HttpClient Http;
+@inject NavigationManager NavigationManager;
+@inject IJSRuntime JSRuntime;
+
+<style>
+    .dashboard-container {
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    }
+
+    .header-card {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-radius: 0.75rem;
+    transition: all 0.3s ease;
+    }
+
+    .dashboard-card {
+    border-radius: 0.75rem;
+    transition: all 0.3s ease;
+    height: 100%;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
+
+    .card-gradient-1 {
+    background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%);
+    }
+
+    .card-gradient-2 {
+    background: linear-gradient(135deg, #ffffff 0%, #f5f0ff 100%);
+    }
+
+    .card-gradient-3 {
+    background: linear-gradient(135deg, #ffffff 0%, #fff0f0 100%);
+    }
+
+    .card-gradient-4 {
+    background: linear-gradient(135deg, #ffffff 0%, #f0fff5 100%);
+    }
+
+    .risk-very-low {
+    color: #2ecc71;
+    background: linear-gradient(135deg, #eafaf1 0%, #d5f5e3 100%);
+    }
+
+    .risk-low {
+    color: #3498db;
+    background: linear-gradient(135deg, #ebf5fb 0%, #d6eaf8 100%);
+    }
+
+    .risk-moderate {
+    color: #f39c12;
+    background: linear-gradient(135deg, #fef9e7 0%, #fcf3cf 100%);
+    }
+
+    .risk-high {
+    color: #e74c3c;
+    background: linear-gradient(135deg, #fdedec 0%, #f9ebea 100%);
+    }
+
+    .risk-very-high {
+    color: #8e44ad;
+    background: linear-gradient(135deg, #f4ecf7 0%, #e8daef 100%);
+    }
+
+    .risk-indicator {
+    width: 230px;
+    height: 230px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .risk-value {
+    font-size: 3rem;
+    font-weight: bold;
+    }
+
+    .risk-label {
+    font-size: 1.25rem;
+    font-weight: 500;
+    }
+
+    .weather-icon {
+    font-size: 2.5rem;
+    margin-right: 0.5rem;
+    }
+
+    .alert-card {
+    border-radius: 0.75rem;
+    border: none;
+    }
+
+    .chart-container {
+    height: 350px;
+    width: 100%;
+    }
+
+    .animated-progress {
+    animation: progress-animation 2s ease-in-out;
+    }
+
+    @@keyframes progress-animation {
+    from { width: 0%; }
+    to { width: 100%; }
+    }
+
+    .data-table {
+    border-radius: 0.5rem;
+    overflow: hidden;
+    }
+
+    .data-table .mud-table-container {
+    border-radius: 0.5rem;
+    }
+
+    .data-table .mud-table-head {
+    background-color: #f5f7fa;
+    }
+
+    .data-chip {
+    border-radius: 1rem;
+    font-weight: 500;
+    }
+</style>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="dashboard-container mt-4">
+    <MudGrid>
+        <!-- Header Area -->
+        <MudItem xs="12">
+            <MudPaper Elevation="0" Class="header-card pa-4 mb-4 d-flex align-center">
+                <div class="d-flex align-center">
+                    <MudIcon Icon="@Icons.Material.Filled.LocalFireDepartment" Color="Color.Error" Size="Size.Large" Class="mr-3" />
+                    <div>
+                        <MudText Typo="Typo.h4" Style="color:white;">Sistema de Monitorização de Risco de Incêndio</MudText>
+                        <MudText Typo="Typo.body2" Style="color:white;" Class="opacity-75">Dados em tempo real • Última atualização: @(latestReading?.data_registo.ToString("dd/MM/yyyy HH:mm") ?? "Carregando...")</MudText>
+                    </div>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Current Fire Risk Card -->
+        <MudItem xs="12" md="6" lg="3">
+            <MudPaper Elevation="0" Class="dashboard-card card-gradient-1 pa-4 mud-height-full">
+                <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-2 fw-bold">Risco Atual de Incêndio</MudText>
+                <MudDivider Class="mb-4" />
+                @if (latestReading != null)
+                {
+                    <div class="@GetRiskBackgroundClass(latestReading.risco_incendio) risk-indicator">
+                        <div class="text-center">
+                            <div class="risk-value">@Math.Round(latestReading.risco_incendio*100, 0)%</div>
+                            <div class="risk-label">@GetRiskLevel(latestReading.risco_incendio)</div>
+                        </div>
+                    </div>
+                    <MudProgressLinear Size="Size.Large" Value="@GetRiskPercentage(latestReading.risco_incendio)" 
+                    Color="@GetRiskColor(latestReading.risco_incendio*100)" 
+                    Class="mt-4 animated-progress" Style="height:10px;border-radius:5px;" />
+                }
+                else
+                {
+                    <MudSkeleton SkeletonType="SkeletonType.Circle" Width="230px" Height="230px" Class="mx-auto" />
+                    <MudSkeleton Width="100%" Height="10px" Class="mt-4" />
+                }
+            </MudPaper>
+        </MudItem>
+
+        <!-- Current Conditions Card -->
+        <MudItem xs="12" md="6" lg="3">
+            <MudPaper Elevation="0" Class="dashboard-card card-gradient-2 pa-4 mud-height-full">
+                <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mb-2 fw-bold">Condições Atuais</MudText>
+                <MudDivider Class="mb-4" />
+                @if (latestReading != null)
+                {
+                    <div class="d-flex flex-column gap-4">
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.Thermostat" Color="Color.Error" Size="Size.Large" Class="weather-icon" />
+                            <div>
+                                <MudText Typo="Typo.body1">Temperatura</MudText>
+                                <MudText Typo="Typo.h5"><strong>@latestReading.temperatura°C</strong></MudText>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.WaterDrop" Color="Color.Info" Size="Size.Large" Class="weather-icon" />
+                            <div>
+                                <MudText Typo="Typo.body1">Humidade</MudText>
+                                <MudText Typo="Typo.h5"><strong>@latestReading.humidade%</strong></MudText>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.WbSunny" Color="Color.Warning" Size="Size.Large" Class="weather-icon" />
+                            <div>
+                                <MudText Typo="Typo.body1">Radiação</MudText>
+                                <MudText Typo="Typo.h5"><strong>@latestReading.radiacao</strong></MudText>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <MudSkeleton Width="100%" Height="220px" />
+                }
+            </MudPaper>
+        </MudItem>
+
+        <!-- Risk Factors Card -->
+<MudItem xs="12" md="6" lg="3">
+    <MudPaper Elevation="0" Class="dashboard-card card-gradient-3 pa-4 mud-height-full">
+        <MudText Typo="Typo.h6" Color="Color.Error" Class="mb-2 fw-bold">Fatores de Risco</MudText>
+        <MudDivider Class="mb-4" />
+        @if (latestReading != null)
+        {
+            <div class="d-flex flex-column gap-3">
+                <!-- Temperature Risk -->
+                <div>
+                    <div class="d-flex justify-space-between mb-1">
+                        <MudText Typo="Typo.body2"><strong>Temperatura</strong></MudText>
+                        <MudText Typo="Typo.body2">Nível @latestReading.risco_temperatura</MudText>
+                    </div>
+                            <MudProgressLinear Color="@GetRiskColor2(latestReading.risco_temperatura)" Value="@(latestReading.risco_temperatura * 33.33)" Class="rounded animated-progress" Style="height: 10px;" />
+                </div>
+                
+                <!-- Humidity Risk -->
+                <div>
+                    <div class="d-flex justify-space-between mb-1">
+                        <MudText Typo="Typo.body2"><strong>Humidade</strong></MudText>
+                        <MudText Typo="Typo.body2">Nível @latestReading.risco_humidade</MudText>
+                    </div>
+                            <MudProgressLinear Color="@GetRiskColor2(latestReading.risco_humidade)" Value="@(latestReading.risco_humidade * 33.33)" Class="rounded animated-progress" Style="height: 10px;" />
+                </div>
+                
+                <!-- Radiation Risk -->
+                <div>
+                    <div class="d-flex justify-space-between mb-1">
+                        <MudText Typo="Typo.body2"><strong>Radiação</strong></MudText>
+                        <MudText Typo="Typo.body2">Nível @CalculateRadiationRisk(latestReading.radiacao)</MudText>
+                    </div>
+                            <MudProgressLinear Color="@GetRiskColor2(CalculateRadiationRisk(latestReading.radiacao))" Value="@(CalculateRadiationRisk(latestReading.radiacao) * 33.33)" Class="rounded animated-progress" Style="height: 10px;" />
+                </div>
+                
+                <!-- Risk Legend -->
+                <div class="mt-3 pt-2" style="border-top: 1px dashed rgba(0,0,0,0.1);">
+                    <MudText Typo="Typo.caption" Class="mb-2"><strong>Níveis de Risco:</strong></MudText>
+                    <div class="d-flex gap-2">
+                        <MudChip T="string" Size="Size.Small" Color="Color.Info">1 - Baixo</MudChip>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning">2 - Médio</MudChip>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Error">3 - Alto</MudChip>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <MudSkeleton Width="100%" Height="230px" />
+        }
+    </MudPaper>
+</MudItem>
+
+        <!-- Alert Status Card -->
+        <MudItem xs="12" md="6" lg="3">
+            <MudPaper Elevation="0" Class="dashboard-card card-gradient-4 pa-4 mud-height-full">
+                <MudText Typo="Typo.h6" Color="Color.Success" Class="mb-2 fw-bold">Estado de Alerta</MudText>
+                <MudDivider Class="mb-4" />
+                @if (latestReading != null)
+                {
+                    <MudAlert Severity="@GetAlertSeverity(latestReading.risco_incendio)" 
+                    Variant="Variant.Filled" 
+                    Class="my-2 alert-card py-3"
+                    Icon="@GetAlertIcon(latestReading.risco_incendio)">
+                        <MudText Typo="Typo.h6">@GetAlertMessage(latestReading.risco_incendio)</MudText>
+                    </MudAlert>
+
+                    <MudText Typo="Typo.body1" Class="mt-4 pa-2" Style="background-color: rgba(0,0,0,0.03); border-radius: 0.5rem;">
+                        @GetRiskRecommendation(latestReading.risco_incendio)
+                    </MudText>
+
+                    <MudButton Variant="Variant.Filled" 
+                    Color="@GetRiskColor(latestReading.risco_incendio)" 
+                    FullWidth="true" 
+                    Class="mt-4">
+                        @GetActionButton(latestReading.risco_incendio)
+                    </MudButton>
+                }
+                else
+                {
+                    <MudSkeleton Width="100%" Height="220px" />
+                }
+            </MudPaper>
+        </MudItem>
+
+        <!-- Historical Data Chart -->
+        <MudItem xs="12" lg="8">
+            <MudPaper Elevation="0" Class="dashboard-card card-gradient-1 pa-4 h-100">
+                <div class="d-flex justify-space-between align-center mb-2">
+                    <MudText Typo="Typo.h6" Color="Color.Primary" Class="fw-bold">Histórico de Risco de Incêndio</MudText>
+                    <MudButtonGroup Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">
+                        <MudButton OnClick="@(() => ChangeHistoryPeriod(PeriodType.Hour))">Hora</MudButton>
+                        <MudButton OnClick="@(() => ChangeHistoryPeriod(PeriodType.Day))">Dia</MudButton>
+                        <MudButton OnClick="@(() => ChangeHistoryPeriod(PeriodType.Week))">Semana</MudButton>
+                    </MudButtonGroup>
+                </div>
+                <MudDivider Class="mb-4" />
+                @if (historicalData != null && historicalData.Any())
+                {
+                    <div class="chart-container">
+                        <MudChart ChartType="ChartType.Line"
+                        ChartSeries="@historicalSeries"
+                        XAxisLabels="@historicalLabels"
+                        Width="100%"
+
+                        Height="100%"
+                        ChartOptions="@chartOptions">
+                            <CustomGraphics>
+                                <MudText Typo="Typo.body2" Align="Align.Center" Class="mt-4 text-secondary">
+                                    @GetHistoryTimeRangeText()
+                                </MudText>
+                            </CustomGraphics>
+                        </MudChart>
+                    </div>
+                }
+                else
+                {
+                    <MudSkeleton Width="100%" Height="350px" />
+                }
+            </MudPaper>
+        </MudItem>
+
+        <!-- Recent Records Table -->
+        <MudItem xs="12" lg="4">
+            <MudPaper Elevation="0" Class="dashboard-card card-gradient-2 pa-4">
+                <div class="d-flex justify-space-between align-center mb-2">
+                    <MudText Typo="Typo.h6" Color="Color.Secondary" Class="fw-bold">Registos Recentes</MudText>
+                    <MudTooltip Text="Atualizar dados">
+                        <MudIconButton Icon="@Icons.Material.Filled.Refresh" Color="Color.Secondary" />
+                    </MudTooltip>
+                </div>
+                <MudDivider Class="mb-4" />
+                @if (recentRecords != null && recentRecords.Any())
+                {
+                    <div class="data-table">
+                        <MudTable Items="@recentRecords" 
+                        Dense="true" 
+                        Hover="true" 
+                        Striped="true" 
+                        Elevation="0"
+                        Class="rounded"
+                        T="Tb_registos">
+                            <HeaderContent>
+                                <MudTh><MudText Typo="Typo.subtitle2">Data</MudText></MudTh>
+                                <MudTh><MudText Typo="Typo.subtitle2">Temp.</MudText></MudTh>
+                                <MudTh><MudText Typo="Typo.subtitle2">Risco</MudText></MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Data">
+                                    <MudText Typo="Typo.body2">@context.data_registo.ToString("dd/MM")</MudText>
+                                    <MudText Typo="Typo.caption" Class="text-secondary">@context.data_registo.ToString("HH:mm")</MudText>
+                                </MudTd>
+                                <MudTd DataLabel="Temperatura">
+                                    <MudText Typo="Typo.body2">@context.temperatura°C</MudText>
+                                </MudTd>
+                                <MudTd DataLabel="Risco">
+                                    <MudChip Color="@GetRiskColor(context.risco_incendio)" 
+                                    Size="Size.Small" 
+                                    Class="data-chip"
+                                    Style="font-weight:500" 
+                                    T="string">
+                                        @Math.Round(context.risco_incendio*100, 0)%
+                                    </MudChip>
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </div>
+                    <MudButton Variant="Variant.Text" 
+                    Color="Color.Secondary" 
+                    FullWidth="true" 
+                    Class="mt-3"
+                    EndIcon="@Icons.Material.Filled.ArrowForward" OnClick="@(()=>NavigationManager.NavigateTo("/"))">
+                        Ver todos os registos
+                    </MudButton>
+                }
+                else
+                {
+                    <MudSkeleton Width="100%" Height="300px" />
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+

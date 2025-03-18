@@ -4,6 +4,7 @@ using Clima.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Clima.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250318080706_init_v12")]
+    partial class init_v12
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -36,16 +39,10 @@ namespace Clima.Migrations
                     b.Property<double>("humidade")
                         .HasColumnType("float");
 
-                    b.Property<int>("humidade_solo")
-                        .HasColumnType("int");
-
                     b.Property<double>("radiacao")
                         .HasColumnType("float");
 
                     b.Property<int>("risco_humidade")
-                        .HasColumnType("int");
-
-                    b.Property<int>("risco_humidade_solo")
                         .HasColumnType("int");
 
                     b.Property<double>("risco_incendio")

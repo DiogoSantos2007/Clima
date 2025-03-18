@@ -17,8 +17,11 @@ namespace Clima.Controllers
                 Console.WriteLine("Novo Registo");
                 Console.WriteLine($"Temperatura: {climaData.temperatura}");
                 Console.WriteLine($"Humidade: {climaData.humidade}");
+                Console.WriteLine($"Humidade Solo:{climaData.humidade_solo}");
                 Console.WriteLine($"Risco Temperatura: {climaData.risco_temperatura}");
-                Console.WriteLine($"Risco Humidade: {climaData.risco_humidade}");
+                Console.WriteLine($"Risco Humidade Ar: {climaData.risco_humidade}");
+                Console.WriteLine($"Risco Humidade Solo: {climaData.risco_humidade_solo}");
+
 
 
                 await appDbContext.Tb_Registos.AddAsync(climaData);

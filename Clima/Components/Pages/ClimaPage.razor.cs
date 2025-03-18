@@ -18,6 +18,7 @@ namespace Clima.Components.Pages
         private DateRange dateRange = new DateRange(DateTime.Now.AddDays(-7), DateTime.Now);
         private int tempRiskFilter = -1;
         private int humidRiskFilter = -1;
+        private int soilHumidRiskFilter = -1; // Added soil humidity risk filter
         private Statistics? statistics;
 
         protected override async Task OnInitializedAsync()
@@ -39,11 +40,14 @@ namespace Clima.Components.Pages
                 if (dateRange.End.HasValue)
                     query = query.Where(r => r.data_registo <= dateRange.End.Value.AddDays(1));
 
-                if (tempRiskFilter!=-1)
+                if (tempRiskFilter != -1)
                     query = query.Where(r => r.risco_temperatura == tempRiskFilter);
 
-                if (humidRiskFilter!=-1)
+                if (humidRiskFilter != -1)
                     query = query.Where(r => r.risco_humidade == humidRiskFilter);
+
+                if (soilHumidRiskFilter != -1) // Added soil humidity risk filter
+                    query = query.Where(r => r.risco_humidade_solo == soilHumidRiskFilter);
 
                 registos = await query.OrderByDescending(r => r.data_registo).ToListAsync();
 
@@ -63,6 +67,9 @@ namespace Clima.Components.Pages
                         AvgHumidity = allRecords.Average(r => r.humidade),
                         MaxHumidity = allRecords.Max(r => r.humidade),
                         MinHumidity = allRecords.Min(r => r.humidade),
+                        AvgSoilHumidity = allRecords.Average(r => r.humidade_solo), // Added soil humidity stats
+                        MaxSoilHumidity = allRecords.Max(r => r.humidade_solo),     // Added soil humidity stats
+                        MinSoilHumidity = allRecords.Min(r => r.humidade_solo),     // Added soil humidity stats
                         DateRange = $"{allRecords.Min(r => r.data_registo):d} - {allRecords.Max(r => r.data_registo):d}"
                     };
                 }
@@ -85,13 +92,13 @@ namespace Clima.Components.Pages
         private async Task DeleteRecord(Tb_registos record)
         {
             var parameters = new DialogParameters();
-            parameters.Add("ContentText", $"Are you sure you want to delete record #{record.ID_registo}? This cannot be undone.");
-            parameters.Add("ButtonText", "Delete");
+            parameters.Add("ContentText", $"Tens a certeza que queres eliminar o registo #{record.ID_registo}? Esta ação é irreversível.");
+            parameters.Add("ButtonText", "Apagar");
             parameters.Add("Color", Color.Error);
 
             var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
 
-            var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirm Delete", parameters, options);
+            var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirmar Eliminição", parameters, options);
             var result = await dialog.Result;
 
             if (!result.Canceled)
@@ -101,7 +108,7 @@ namespace Clima.Components.Pages
                     DbContext.Tb_Registos.Remove(record);
                     await DbContext.SaveChangesAsync();
 
-                    Snackbar.Add($"Record #{record.ID_registo} deleted successfully", Severity.Success);
+                    Snackbar.Add($"O registo #{record.ID_registo} foi apagado", Severity.Success);
                     await LoadData();
                 }
                 catch (Exception ex)
@@ -117,7 +124,7 @@ namespace Clima.Components.Pages
             parameters.Add("Record", record);
 
             var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Small };
-            await DialogService.ShowAsync<RecordDetailDialog>("Record Details", parameters, options);
+            await DialogService.ShowAsync<RecordDetailDialog>("Detalhes do Registo", parameters, options);
         }
 
         private Color GetTemperatureColor(int riskLevel) => riskLevel switch
@@ -136,12 +143,21 @@ namespace Clima.Components.Pages
             2 => Color.Warning,
             3 => Color.Error,
             _ => Color.Default
-        }; private async void DownloadExcel()
+        };
+
+        private Color GetSoilHumidityColor(int riskLevel) => riskLevel switch // Added soil humidity color method
+        {
+            0 => Color.Success,
+            1 => Color.Info,
+            2 => Color.Warning,
+            3 => Color.Error,
+            _ => Color.Default
+        };
+
+        private async void DownloadExcel()
         {
             try
             {
-                
-
                 byte[] fileBytes = await ExportToExcel(registos);
 
                 // Convert to Base64 for JavaScript handling
@@ -174,7 +190,9 @@ namespace Clima.Components.Pages
                 worksheet.Cell(1, 3).Value = "Humidity (%)";
                 worksheet.Cell(1, 4).Value = "Temperature Risk Level";
                 worksheet.Cell(1, 5).Value = "Humidity Risk Level";
-                worksheet.Cell(1, 6).Value = "Date & Time";
+                worksheet.Cell(1, 6).Value = "Soil Humidity (%)"; // Added soil humidity header
+                worksheet.Cell(1, 7).Value = "Soil Humidity Risk Level"; // Added soil humidity risk header
+                worksheet.Cell(1, 8).Value = "Date & Time"; // Adjusted column index
 
                 // Style the header row
                 var headerRow = worksheet.Row(1);
@@ -191,7 +209,9 @@ namespace Clima.Components.Pages
                     worksheet.Cell(row, 3).Value = record.humidade;
                     worksheet.Cell(row, 4).Value = record.risco_temperatura;
                     worksheet.Cell(row, 5).Value = record.risco_humidade;
-                    worksheet.Cell(row, 6).Value = record.data_registo;
+                    worksheet.Cell(row, 6).Value = record.humidade_solo; // Added soil humidity value
+                    worksheet.Cell(row, 7).Value = record.risco_humidade_solo; // Added soil humidity risk value
+                    worksheet.Cell(row, 8).Value = record.data_registo; // Adjusted column index
 
                     // Format temperature cells based on risk level
                     if (record.risco_temperatura >= 2)
@@ -203,6 +223,12 @@ namespace Clima.Components.Pages
                     if (record.risco_humidade >= 2)
                     {
                         worksheet.Cell(row, 3).Style.Font.FontColor = ClosedXML.Excel.XLColor.Blue;
+                    }
+
+                    // Format soil humidity cells based on risk level
+                    if (record.risco_humidade_solo >= 2)
+                    {
+                        worksheet.Cell(row, 6).Style.Font.FontColor = ClosedXML.Excel.XLColor.DarkGreen;
                     }
 
                     row++;
@@ -231,6 +257,11 @@ namespace Clima.Components.Pages
                 worksheet.Cell(row, 2).Style.NumberFormat.Format = "0.00 %";
 
                 row++;
+                worksheet.Cell(row, 1).Value = "Average Soil Humidity:"; // Added soil humidity summary
+                worksheet.Cell(row, 2).Value = data.Count > 0 ? data.Average(r => r.humidade_solo) : 0;
+                worksheet.Cell(row, 2).Style.NumberFormat.Format = "0.00 %";
+
+                row++;
                 worksheet.Cell(row, 1).Value = "Date Range:";
                 if (data.Count > 0)
                 {
@@ -250,6 +281,7 @@ namespace Clima.Components.Pages
                 }
             }
         }
+
         public class Statistics
         {
             public int TotalRecords { get; set; }
@@ -259,6 +291,9 @@ namespace Clima.Components.Pages
             public double AvgHumidity { get; set; }
             public double MaxHumidity { get; set; }
             public double MinHumidity { get; set; }
+            public double AvgSoilHumidity { get; set; } // Added soil humidity stats
+            public double MaxSoilHumidity { get; set; } // Added soil humidity stats
+            public double MinSoilHumidity { get; set; } // Added soil humidity stats
             public string DateRange { get; set; } = string.Empty;
         }
     }

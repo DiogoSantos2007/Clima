@@ -1,5 +1,4 @@
 ﻿@using Clima.Models
-
 <MudDialog>
     <DialogContent>
         @if (Record != null)
@@ -8,36 +7,43 @@
                 <MudCardContent>
                     <MudGrid>
                         <MudItem xs="12">
-                            <MudText Typo="Typo.h6" Class="mb-4">Record #@Record.ID_registo</MudText>
+                            <MudText Typo="Typo.h6" Class="mb-4">Registo #@Record.ID_registo</MudText>
                         </MudItem>
-
                         <MudItem xs="12">
                             <MudTimeline TimelinePosition="TimelinePosition.Start">
                                 <MudTimelineItem Color="Color.Primary" Size="Size.Medium">
                                     <ItemContent>
-                                        <MudText Typo="Typo.h6">Date & Time</MudText>
+                                        <MudText Typo="Typo.h6">Data e Hora</MudText>
                                         <MudText>@Record.data_registo.ToString("F")</MudText>
                                     </ItemContent>
                                 </MudTimelineItem>
-
                                 <MudTimelineItem Color="GetTemperatureColor(Record.risco_temperatura)" Size="Size.Medium">
                                     <ItemContent>
-                                        <MudText Typo="Typo.h6">Temperature</MudText>
+                                        <MudText Typo="Typo.h6">Temperatura</MudText>
                                         <MudText Typo="Typo.body1">@Record.temperatura.ToString("F1") °C</MudText>
                                         <MudAlert Severity="GetSeverity(Record.risco_temperatura)" Variant="Variant.Filled"
                                                   Dense="true" Class="mt-2">
-                                            Risk Level: @Record.risco_temperatura
+                                            Risco: @Record.risco_temperatura
                                         </MudAlert>
                                     </ItemContent>
                                 </MudTimelineItem>
-
                                 <MudTimelineItem Color="GetHumidityColor(Record.risco_humidade)" Size="Size.Medium">
                                     <ItemContent>
-                                        <MudText Typo="Typo.h6">Humidity</MudText>
+                                        <MudText Typo="Typo.h6">Humidade</MudText>
                                         <MudText Typo="Typo.body1">@Record.humidade.ToString("F1") %</MudText>
                                         <MudAlert Severity="GetSeverity(Record.risco_humidade)" Variant="Variant.Filled"
                                                   Dense="true" Class="mt-2">
-                                            Risk Level: @Record.risco_humidade
+                                            Risco: @Record.risco_humidade
+                                        </MudAlert>
+                                    </ItemContent>
+                                </MudTimelineItem>
+                                <MudTimelineItem Color="GetSoilHumidityColor(Record.risco_humidade_solo)" Size="Size.Medium">
+                                    <ItemContent>
+                                        <MudText Typo="Typo.h6">Humidade do Solo</MudText>
+                                        <MudText Typo="Typo.body1">@Record.humidade_solo %</MudText>
+                                        <MudAlert Severity="GetSeverity(Record.risco_humidade_solo)" Variant="Variant.Filled"
+                                                  Dense="true" Class="mt-2">
+                                            Risco: @Record.risco_humidade_solo
                                         </MudAlert>
                                     </ItemContent>
                                 </MudTimelineItem>
@@ -49,20 +55,17 @@
         }
         else
         {
-            <MudText>No record data available.</MudText>
+            <MudText>Não há registos.</MudText>
         }
     </DialogContent>
     <DialogActions>
-        <MudButton Color="Color.Primary" OnClick="Close">Close</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Close">Fechar</MudButton>
     </DialogActions>
 </MudDialog>
-
 @code {
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
     [Parameter] public Tb_registos? Record { get; set; }
-
     private void Close() => MudDialog.Close();
-
     private Color GetTemperatureColor(int riskLevel) => riskLevel switch
     {
         0 => Color.Success,
@@ -71,7 +74,6 @@
         3 => Color.Error,
         _ => Color.Default
     };
-
     private Color GetHumidityColor(int riskLevel) => riskLevel switch
     {
         0 => Color.Success,
@@ -80,7 +82,14 @@
         3 => Color.Error,
         _ => Color.Default
     };
-
+    private Color GetSoilHumidityColor(int riskLevel) => riskLevel switch
+    {
+        0 => Color.Success,
+        1 => Color.Info,
+        2 => Color.Warning,
+        3 => Color.Error,
+        _ => Color.Default
+    };
     private Severity GetSeverity(int riskLevel) => riskLevel switch
     {
         0 => Severity.Success,
