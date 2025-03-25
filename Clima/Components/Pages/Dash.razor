@@ -1,4 +1,4 @@
-﻿@page "/dash"
+﻿@page "/"
 @using System.Globalization
 @using System.Linq
 @using Clima.Data
@@ -10,15 +10,15 @@
 
 <style>
     .dashboard-container {
-    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+    /* background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%); */
     border-radius: 1rem;
     padding: 1.5rem;
     }
 
     .header-card {
     background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    border-radius: 0.75rem;
+/*     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+ */    border-radius: 0.75rem;
     transition: all 0.3s ease;
     }
 
@@ -35,44 +35,48 @@
     }
 
     .card-gradient-1 {
-    background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%);
+    /* background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%); */
     }
 
     .card-gradient-2 {
-    background: linear-gradient(135deg, #ffffff 0%, #f5f0ff 100%);
+    /* background: linear-gradient(135deg, #ffffff 0%, #f5f0ff 100%); */
     }
 
     .card-gradient-3 {
-    background: linear-gradient(135deg, #ffffff 0%, #fff0f0 100%);
+    /* background: linear-gradient(135deg, #ffffff 0%, #fff0f0 100%); */
     }
 
     .card-gradient-4 {
-    background: linear-gradient(135deg, #ffffff 0%, #f0fff5 100%);
+    /* background: linear-gradient(135deg, #ffffff 0%, #f0fff5 100%); */
     }
 
     .risk-very-low {
     color: #2ecc71;
-    background: linear-gradient(135deg, #eafaf1 0%, #d5f5e3 100%);
+    /* background: linear-gradient(135deg, #eafaf1 0%, #d5f5e3 100%); */
     }
 
     .risk-low {
     color: #3498db;
-    background: linear-gradient(135deg, #ebf5fb 0%, #d6eaf8 100%);
+        background-color: color-mix(in srgb, white 0.1%, white 1%);
     }
 
     .risk-moderate {
     color: #f39c12;
-    background: linear-gradient(135deg, #fef9e7 0%, #fcf3cf 100%);
+        background-color: color-mix(in srgb, white 0.1%, white 1%);
+        /* background: linear-gradient(135deg, #fef9e7 0%, #fcf3cf 100%); */
     }
 
     .risk-high {
     color: #e74c3c;
-    background: linear-gradient(135deg, #fdedec 0%, #f9ebea 100%);
+        background-color: color-mix(in srgb, white 0.1%, white 1%);
+        /* background: linear-gradient(135deg, #fdedec 0%, #f9ebea 100%); */
     }
 
     .risk-very-high {
     color: #8e44ad;
-    background: linear-gradient(135deg, #f4ecf7 0%, #e8daef 100%);
+            background-color: color-mix(in srgb, white 0.1%, white 1%);
+
+    /* background: linear-gradient(135deg, #f4ecf7 0%, #e8daef 100%); */
     }
 
     .risk-indicator {
@@ -108,7 +112,6 @@
     }
 
     .chart-container {
-    height: 350px;
     width: 100%;
     }
 
@@ -131,7 +134,7 @@
     }
 
     .data-table .mud-table-head {
-    background-color: #f5f7fa;
+    /* background-color: #f5f7fa; */
     }
 
     .data-chip {
@@ -144,7 +147,7 @@
     <MudGrid>
         <!-- Header Area -->
         <MudItem xs="12">
-            <MudPaper Elevation="0" Class="header-card pa-4 mb-4 d-flex align-center">
+            <MudPaper Elevation="8" Class="header-card pa-4 mb-4 d-flex align-center">
                 <div class="d-flex align-center">
                     <MudIcon Icon="@Icons.Material.Filled.LocalFireDepartment" Color="Color.Error" Size="Size.Large" Class="mr-3" />
                     <div>
@@ -157,7 +160,7 @@
 
         <!-- Current Fire Risk Card -->
         <MudItem xs="12" md="6" lg="3">
-            <MudPaper Elevation="0" Class="dashboard-card card-gradient-1 pa-4 mud-height-full">
+            <MudPaper Elevation="2" Class="dashboard-card card-gradient-1 pa-4 mud-height-full">
                 <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-2 fw-bold">Risco Atual de Incêndio</MudText>
                 <MudDivider Class="mb-4" />
                 @if (latestReading != null)
@@ -290,13 +293,6 @@
                     <MudText Typo="Typo.body1" Class="mt-4 pa-2" Style="background-color: rgba(0,0,0,0.03); border-radius: 0.5rem;">
                         @GetRiskRecommendation(latestReading.risco_incendio)
                     </MudText>
-
-                    <MudButton Variant="Variant.Filled" 
-                    Color="@GetRiskColor(latestReading.risco_incendio)" 
-                    FullWidth="true" 
-                    Class="mt-4">
-                        @GetActionButton(latestReading.risco_incendio)
-                    </MudButton>
                 }
                 else
                 {

@@ -1,35 +1,205 @@
 ﻿@inherits LayoutComponentBase
+@using MudBlazor
 
-<MudThemeProvider />
+<MudThemeProvider Theme="Theme" @ref="_mudThemeProvider" IsDarkMode="@_isDarkMode" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
-
 <MudLayout>
-    <MudAppBar>
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        My Application
+    <!-- AppBar Section -->
+    <MudAppBar Color="Color.Primary" Elevation="1">
+        <!-- Botão do Menu para abrir/fechar o Drawer -->
+        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                       Color="Color.Inherit"
+                       Edge="Edge.Start"
+                       OnClick="@DrawerToggle" />
+
+        <!-- Título com Ícone -->
+        <MudText Typo="Typo.h6" Class="ml-3" Color="Color.Inherit">
+            <MudIcon Icon="@Icons.Material.Filled.Cloud" Class="mr-2" />
+            Sistema de Clima
+        </MudText>
     </MudAppBar>
-    <MudDrawer @bind-Open="@_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="8">
+
+    <!-- Drawer Section -->
+    <MudDrawer @bind-Open="@_drawerOpen"
+               ClipMode="DrawerClipMode.Always"
+               Elevation="4"
+               Color="Color.Default">
         <MudNavMenu>
-            <MudNavLink Href="/" Match="NavLinkMatch.All">Dashboard</MudNavLink>
-            <MudNavLink Href="/servers" Match="NavLinkMatch.Prefix">Servers</MudNavLink>
-            <MudNavGroup Title="Settings" Expanded="true">
-                <MudNavLink Href="/users" Match="NavLinkMatch.Prefix">Users</MudNavLink>
-                <MudNavLink Href="/security" Match="NavLinkMatch.Prefix">Security</MudNavLink>
-            </MudNavGroup>
-            <MudNavLink Href="/about" Match="NavLinkMatch.Prefix">About</MudNavLink>
+            <!-- Links de Navegação -->
+            <MudNavLink Href="/" Match="NavLinkMatch.All" Style="color:var(--mud-palette-white);">
+                <MudIcon Icon="@Icons.Material.Filled.Home" Class="mr-2" />
+                Página Inicial
+            </MudNavLink>
+            <MudNavLink Href="/registos" Match="NavLinkMatch.Prefix" Style="color:var(--mud-palette-white);">
+                <MudIcon Icon="@Icons.Material.Filled.ListAlt" Class="mr-2" />
+                Registos
+            </MudNavLink>
+
+            <!-- Divisor para separar -->
+            <MudDivider Class="my-3" />
+
+            <!-- Seção de Toggle (Dark/Light Mode) e Preferência do Sistema -->
+            <MudStack Spacing="2" Class="px-4" Style="bottom:20px;position:absolute;align-items:anchor-center;">
+                <!-- Linha com LightMode, Switch e DarkMode -->
+                <MudStack Row="true"
+                          AlignItems="AlignItems.Center"
+                          >
+                    <MudIcon Icon="@Icons.Material.Filled.LightMode" Style="color:var(--mud-palette-white);" />
+                    <MudSwitch T="bool"
+                               Color="Color.Primary"
+                               Class="mx-2"
+                               Disabled="@_useSystemPreference"
+                               ValueChanged="ChangedMode"/>
+                    <MudIcon Icon="@Icons.Material.Filled.DarkMode" Style="color:var(--mud-palette-white);" />
+                </MudStack>
+
+                <!-- Checkbox para Preferência do Sistema -->
+                <MudCheckBox T="bool"
+                             Color="Color.Primary"
+                            ValueChanged="ChangedPreference" Style="color:var(--mud-palette-white);">
+                    Preferência do Sistema
+                </MudCheckBox>
+            </MudStack>
         </MudNavMenu>
     </MudDrawer>
+
+    <!-- Área Principal (Main Content) -->
     <MudMainContent>
         @Body
     </MudMainContent>
 </MudLayout>
+
 @code {
-    bool _drawerOpen = true;
+    private bool _drawerOpen = true;
+    private bool _isDarkMode = false;
+    private bool _useSystemPreference = false;
+
+    private MudThemeProvider _mudThemeProvider;
+    [Inject] IJSRuntime JSRuntime { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Check if localStorage has a dark mode preference
+            var storedPreference = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "darkModePreference");
+            var storedSystemPreference = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "useSystemPreference");
+
+            // Parse stored preferences
+            if (bool.TryParse(storedSystemPreference, out bool parsedSystemPreference))
+            {
+                _useSystemPreference = parsedSystemPreference;
+            }
+
+            if (_useSystemPreference)
+            {
+                // Use system preference
+                _isDarkMode = await _mudThemeProvider.GetSystemPreference();
+            }
+            else if (bool.TryParse(storedPreference, out bool parsedDarkMode))
+            {
+                // Use stored dark mode preference
+                _isDarkMode = parsedDarkMode;
+            }
+
+            await _mudThemeProvider.WatchSystemPreference(OnSystemPreferenceChanged);
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnSystemPreferenceChanged(bool newValue)
+    {
+        if (_useSystemPreference)
+        {
+            _isDarkMode = newValue;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task ChangedPreference(bool value)
+    {
+        // Save preferences to localStorage
+        _useSystemPreference = value;
+        if (_useSystemPreference)
+        {
+            _isDarkMode = await _mudThemeProvider.GetSystemPreference();
+        }
+        else
+        {
+            var storedPreference = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "darkModePreference");
+            if (bool.TryParse(storedPreference, out bool parsedDarkModePreference))
+            {
+                _isDarkMode = parsedDarkModePreference;
+            }
+        }
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "useSystemPreference", _useSystemPreference.ToString());
+    }
+
+    private async Task ChangedMode(bool value)
+    {
+        _isDarkMode = value;
+        
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "darkModePreference", _isDarkMode.ToString());
+    }
 
     void DrawerToggle()
     {
         _drawerOpen = !_drawerOpen;
     }
+
+    // Theme definition remains the same as in the previous code
+    public static MudTheme Theme = new MudTheme()
+        {
+            PaletteLight = new PaletteLight()
+            {
+                Primary = "#3498db",      // Azul céu claro
+                Secondary = "#2ecc71",    // Verde suave (representando vegetação)
+                Background = "#f0f4f8",   // Cinza muito claro com tons de azul
+                Surface = "#ffffff",      // Branco puro
+                AppbarBackground = "#2980b9", // Azul muito claro
+                ActionDefault = "#ffffff",
+                White="#000000",
+            // Cores de texto
+                TextPrimary = "#2c3e50",  // Azul escuro acinzentado
+                TextSecondary = "#34495e", // Azul cinza médio
+            // Cores de feedback
+                Success = "#2ecc71",      // Verde suave
+                Warning = "#f39c12",      // Laranja suave
+                Error = "#e74c3c",        // Vermelho suave
+                Info = "#3498db",         // Azul informativo
+            },
+            PaletteDark = new PaletteDark()
+            {
+                Primary = "#1e88e5",      // Azul mais profundo
+                Secondary = "#43a047",    // Verde escuro
+                Background = "#121212",   // Preto muito escuro
+                Surface = "#1e1e1e",      // Cinza quase preto
+                AppbarBackground = "#0d47a1", // Azul marinho escuro
+                ActionDefault = "#ffffff",
+                White = "#ffffff",
+
+            // Cores de texto
+                TextPrimary = "#e0e0e0",  // Cinza claro
+                TextSecondary = "#b0bec5", // Cinza azulado
+            // Cores de feedback
+                Success = "#4caf50",      // Verde escuro
+                Warning = "#ff9800",      // Laranja escuro
+                Error = "#f44336",        // Vermelho escuro
+                Info = "#2196f3",         // Azul informativo escuro
+            }
+        };
 }
+<style>
+    nav.mud-navmenu.mud-navmenu-default.mud-navmenu-margin-none {
+        height: 100%;
+    }
+
+
+</style>

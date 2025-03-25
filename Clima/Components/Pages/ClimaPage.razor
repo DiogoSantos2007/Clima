@@ -1,4 +1,4 @@
-﻿@page "/"
+﻿@page "/registos"
 @using Clima.Components.Pages.Dialogs
 @using Clima.Data
 @using Clima.Models
@@ -12,14 +12,12 @@
 
 <style>
     .dashboard-container {
-        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
         border-radius: 1rem;
         padding: 1.5rem;
     }
 
     .header-card {
         background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
         border-radius: 0.75rem;
         transition: all 0.3s ease;
     }
@@ -31,93 +29,49 @@
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     }
 
-        .dashboard-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
+
+
+    /* Responsive adjustments */
+    @@media (max-width: 600px) {
+        .dashboard-container {
+            padding: 0.5rem;
         }
 
-    .card-gradient-1 {
-        background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%);
-    }
-
-    .card-gradient-2 {
-        background: linear-gradient(135deg, #ffffff 0%, #f5f0ff 100%);
-    }
-
-    .card-gradient-3 {
-        background: linear-gradient(135deg, #ffffff 0%, #f0fff5 100%);
-    }
-
-    .data-table {
-        border-radius: 0.5rem;
-        overflow: hidden;
-    }
-
-        .data-table .mud-table-container {
-            border-radius: 0.5rem;
+        .header-card {
+            text-align: center;
         }
 
-        .data-table .mud-table-head {
-            background-color: #f5f7fa;
-        }
-
-    .temp-low {
-        color: #3498db;
-    }
-
-    .temp-medium {
-        color: #f39c12;
-    }
-
-    .temp-high {
-        color: #e74c3c;
-    }
-
-    .humid-low {
-        color: #e74c3c;
-    }
-
-    .humid-medium {
-        color: #f39c12;
-    }
-
-    .humid-high {
-        color: #3498db;
-    }
-
-    .animated-progress {
-        animation: progress-animation 2s ease-in-out;
-    }
-
-    @@keyframes progress-animation {
-        from {
-            width: 0%;
-        }
-
-        to {
-            width: 100%;
-        }
+            .header-card .mud-icon {
+                display: none;
+            }
     }
 </style>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="dashboard-container mt-4">
-    <!-- Cabeçalho -->
+    <!-- Header -->
     <MudItem xs="12">
-        <MudPaper Elevation="5" Class="header-card pa-4 mb-4 d-flex align-center">
-            <div class="d-flex align-center">
-                <MudIcon Icon="@Icons.Material.Filled.ThermostatAuto" Color="Color.Inherit" Size="Size.Large" Class="mr-3" />
+        <MudPaper Elevation="8" Class="header-card pa-4 mb-4 d-flex align-center flex-wrap">
+            <div class="d-flex align-center flex-grow-1">
+                <MudIcon Icon="@Icons.Material.Filled.ThermostatAuto" Color="Color.Inherit" Size="Size.Large" Class="mr-3 d-none d-md-flex" />
                 <div>
                     <MudText Typo="Typo.h4" Style="color:white;">Painel de Monitorização Climática</MudText>
-                    <MudText Typo="Typo.body2" Style="color:white;" Class="opacity-75">Dados em tempo real • Última atualização: @(latestRecord?.data_registo.ToString("dd/MM/yyyy HH:mm") ?? "Carregando...")</MudText>
+                    <MudText Typo="Typo.body2" Style="color:white;" Class="opacity-75">
+                        Dados em tempo real • Última atualização:
+                        @(latestRecord?.data_registo.ToString("dd/MM/yyyy HH:mm") ?? "Carregando...")
+                    </MudText>
                 </div>
             </div>
         </MudPaper>
     </MudItem>
 
-    <!-- Leituras Recentes e Estatísticas -->
+    <!-- Recent Readings and Statistics -->
     <MudGrid Class="mb-6">
-        <!-- Leituras Recentes -->
-        <MudItem xs="12" md="6">
+        <!-- Recent Readings - Responsive Layout -->
+        <MudItem xs="12" lg="6">
             <MudPaper Elevation="5" Class="dashboard-card card-gradient-1 pa-4 mb-6">
                 <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-3 fw-bold">Leituras Recentes</MudText>
                 <MudDivider Class="mb-4" />
@@ -125,9 +79,9 @@
                 @if (latestRecord != null)
                 {
                     <MudGrid>
-                        <MudItem xs="12" lg="4">
+                        <MudItem xs="12" sm="4">
                             <MudPaper Elevation="1" Class="pa-4 rounded-lg border-1 mb-3" Style="border-style: solid; border-color: rgba(0,0,0,0.12);">
-                                <MudStack Row="true" AlignItems="AlignItems.Center" Style="height:100%;">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Style="height:100%;flex-wrap:wrap;">
                                     <MudIcon Icon="@Icons.Material.Filled.Thermostat" Color="@GetTemperatureColor(latestRecord.risco_temperatura)" Size="Size.Large" Class="mr-3" />
                                     <MudStack Spacing="0">
                                         <MudText Typo="Typo.subtitle1">Temperatura</MudText>
@@ -141,9 +95,9 @@
                                 </MudStack>
                             </MudPaper>
                         </MudItem>
-                        <MudItem xs="12" lg="4">
+                        <MudItem xs="12" sm="4">
                             <MudPaper Elevation="1" Class="pa-4 rounded-lg border-1 mb-3" Style="border-style: solid; border-color: rgba(0,0,0,0.12);">
-                                <MudStack Row="true" AlignItems="AlignItems.Center">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Style="flex-wrap:wrap;">
                                     <MudIcon Icon="@Icons.Material.Filled.WaterDrop" Color="@GetHumidityColor(latestRecord.risco_humidade)" Size="Size.Large" Class="mr-3" />
                                     <MudStack Spacing="0">
                                         <MudText Typo="Typo.subtitle1">Humidade</MudText>
@@ -157,9 +111,9 @@
                                 </MudStack>
                             </MudPaper>
                         </MudItem>
-                        <MudItem xs="12" lg="4">
+                        <MudItem xs="12" sm="4">
                             <MudPaper Elevation="1" Class="pa-4 rounded-lg border-1 mb-3" Style="border-style: solid; border-color: rgba(0,0,0,0.12);">
-                                <MudStack Row="true" AlignItems="AlignItems.Center">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Style="flex-wrap:wrap;">
                                     <MudIcon Icon="@Icons.Material.Filled.Grass" Color="@GetSoilHumidityColor(latestRecord.risco_humidade_solo)" Size="Size.Large" Class="mr-3" />
                                     <MudStack Spacing="0">
                                         <MudText Typo="Typo.subtitle1">Humidade Solo</MudText>
@@ -186,25 +140,29 @@
             </MudPaper>
         </MudItem>
 
-        <!-- Estatísticas -->
-        <MudItem xs="12" md="6">
+        <!-- Statistics - Responsive Layout -->
+        <MudItem xs="12" lg="6">
             <MudPaper Elevation="5" Class="dashboard-card card-gradient-2 pa-4 mb-6">
                 <MudText Typo="Typo.h5" Color="Color.Secondary" Class="mb-3 fw-bold">Estatísticas</MudText>
                 <MudDivider Class="mb-4" />
 
                 @if (statistics != null)
                 {
-                    <MudPaper Elevation="1" Class="pa-4 rounded-lg border-1 mb-3" Style="border-style: solid; border-color: rgba(0,0,0,0.12);">
+                    <MudPaper Elevation="1" Class="pa-4 rounded-lg border-1 mb-x\3" Style="border-style: solid; border-color: rgba(0,0,0,0.12);">
                         <MudGrid>
                             <MudItem xs="6">
                                 <MudStack>
-                                    <MudText Typo="Typo.caption" Color="Color.Primary"><MudIcon Icon="@Icons.Material.Filled.Numbers" Size="Size.Small" Class="mr-1" />Total de Registos</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Primary">
+                                        <MudIcon Icon="@Icons.Material.Filled.Numbers" Size="Size.Small" Class="mr-1" />Total de Registos
+                                    </MudText>
                                     <MudText Typo="Typo.h6">@statistics.TotalRecords</MudText>
                                 </MudStack>
                             </MudItem>
                             <MudItem xs="6">
                                 <MudStack>
-                                    <MudText Typo="Typo.caption" Color="Color.Primary"><MudIcon Icon="@Icons.Material.Filled.DateRange" Size="Size.Small" Class="mr-1" />Intervalo de Datas</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Primary">
+                                        <MudIcon Icon="@Icons.Material.Filled.DateRange" Size="Size.Small" Class="mr-1" />Intervalo de Datas
+                                    </MudText>
                                     <MudText Typo="Typo.h6">@statistics.DateRange</MudText>
                                 </MudStack>
                             </MudItem>
@@ -212,36 +170,63 @@
                     </MudPaper>
 
                     <MudGrid>
-                        <MudItem xs="12" md="4">
+                        <MudItem xs="12" sm="4">
                             <MudPaper Elevation="1" Class="pa-4 rounded-lg border-1" Style="border-style: solid; border-color: rgba(0,0,0,0.12);">
                                 <MudText Typo="Typo.subtitle2" Color="Color.Primary">Estatísticas de Temperatura</MudText>
                                 <MudDivider Class="my-2" />
                                 <MudStack>
-                                    <MudText Typo="Typo.body2"><MudIcon Icon="@Icons.Material.Filled.Calculate" Size="Size.Small" Class="mr-1" /> Média: <b>@statistics.AvgTemperature.ToString("F1") °C</b></MudText>
-                                    <MudText Typo="Typo.body2"><MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" Class="mr-1" Color="Color.Error" /> Máxima: <b>@statistics.MaxTemperature.ToString("F1") °C</b></MudText>
-                                    <MudText Typo="Typo.body2"><MudIcon Icon="@Icons.Material.Filled.TrendingDown" Size="Size.Small" Class="mr-1" Color="Color.Info" /> Mínima: <b>@statistics.MinTemperature.ToString("F1") °C</b></MudText>
+                                    <MudText Typo="Typo.body2">
+                                        <MudIcon Icon="@Icons.Material.Filled.Calculate" Size="Size.Small" Class="mr-1" />
+                                        Média: <b>@statistics.AvgTemperature.ToString("F1") °C</b>
+                                    </MudText>
+                                    <MudText Typo="Typo.body2">
+                                        <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" Class="mr-1" Color="Color.Error" />
+                                        Máxima: <b>@statistics.MaxTemperature.ToString("F1") °C</b>
+                                    </MudText>
+                                    <MudText Typo="Typo.body2">
+                                        <MudIcon Icon="@Icons.Material.Filled.TrendingDown" Size="Size.Small" Class="mr-1" Color="Color.Info" />
+                                        Mínima: <b>@statistics.MinTemperature.ToString("F1") °C</b>
+                                    </MudText>
                                 </MudStack>
                             </MudPaper>
                         </MudItem>
-                        <MudItem xs="12" md="4">
+                        <MudItem xs="12" sm="4">
                             <MudPaper Elevation="1" Class="pa-4 rounded-lg border-1" Style="border-style: solid; border-color: rgba(0,0,0,0.12);">
                                 <MudText Typo="Typo.subtitle2" Color="Color.Primary">Estatísticas de Humidade</MudText>
                                 <MudDivider Class="my-2" />
                                 <MudStack>
-                                    <MudText Typo="Typo.body2"><MudIcon Icon="@Icons.Material.Filled.Calculate" Size="Size.Small" Class="mr-1" /> Média: <b>@statistics.AvgHumidity.ToString("F1") %</b></MudText>
-                                    <MudText Typo="Typo.body2"><MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" Class="mr-1" Color="Color.Error" /> Máxima: <b>@statistics.MaxHumidity.ToString("F1") %</b></MudText>
-                                    <MudText Typo="Typo.body2"><MudIcon Icon="@Icons.Material.Filled.TrendingDown" Size="Size.Small" Class="mr-1" Color="Color.Info" /> Mínima: <b>@statistics.MinHumidity.ToString("F1") %</b></MudText>
+                                    <MudText Typo="Typo.body2">
+                                        <MudIcon Icon="@Icons.Material.Filled.Calculate" Size="Size.Small" Class="mr-1" />
+                                        Média: <b>@statistics.AvgHumidity.ToString("F1") %</b>
+                                    </MudText>
+                                    <MudText Typo="Typo.body2">
+                                        <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" Class="mr-1" Color="Color.Error" />
+                                        Máxima: <b>@statistics.MaxHumidity.ToString("F1") %</b>
+                                    </MudText>
+                                    <MudText Typo="Typo.body2">
+                                        <MudIcon Icon="@Icons.Material.Filled.TrendingDown" Size="Size.Small" Class="mr-1" Color="Color.Info" />
+                                        Mínima: <b>@statistics.MinHumidity.ToString("F1") %</b>
+                                    </MudText>
                                 </MudStack>
                             </MudPaper>
                         </MudItem>
-                        <MudItem xs="12" md="4">
+                        <MudItem xs="12" sm="4">
                             <MudPaper Elevation="1" Class="pa-4 rounded-lg border-1" Style="border-style: solid; border-color: rgba(0,0,0,0.12);">
                                 <MudText Typo="Typo.subtitle2" Color="Color.Primary">Estatísticas de Humidade do Solo</MudText>
                                 <MudDivider Class="my-2" />
                                 <MudStack>
-                                    <MudText Typo="Typo.body2"><MudIcon Icon="@Icons.Material.Filled.Calculate" Size="Size.Small" Class="mr-1" /> Média: <b>@statistics.AvgSoilHumidity.ToString("F1") %</b></MudText>
-                                    <MudText Typo="Typo.body2"><MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" Class="mr-1" Color="Color.Error" /> Máxima: <b>@statistics.MaxSoilHumidity.ToString("F1") %</b></MudText>
-                                    <MudText Typo="Typo.body2"><MudIcon Icon="@Icons.Material.Filled.TrendingDown" Size="Size.Small" Class="mr-1" Color="Color.Info" /> Mínima: <b>@statistics.MinSoilHumidity.ToString("F1") %</b></MudText>
+                                    <MudText Typo="Typo.body2">
+                                        <MudIcon Icon="@Icons.Material.Filled.Calculate" Size="Size.Small" Class="mr-1" />
+                                        Média: <b>@statistics.AvgSoilHumidity.ToString("F1") %</b>
+                                    </MudText>
+                                    <MudText Typo="Typo.body2">
+                                        <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" Class="mr-1" Color="Color.Error" />
+                                        Máxima: <b>@statistics.MaxSoilHumidity.ToString("F1") %</b>
+                                    </MudText>
+                                    <MudText Typo="Typo.body2">
+                                        <MudIcon Icon="@Icons.Material.Filled.TrendingDown" Size="Size.Small" Class="mr-1" Color="Color.Info" />
+                                        Mínima: <b>@statistics.MinSoilHumidity.ToString("F1") %</b>
+                                    </MudText>
                                 </MudStack>
                             </MudPaper>
                         </MudItem>
@@ -255,31 +240,31 @@
         </MudItem>
     </MudGrid>
 
-    <!-- Secção de Registos Climáticos -->
+    <!-- Climate Records Section -->
     <MudPaper Elevation="0" Class="dashboard-card card-gradient-1 pa-4 mb-6">
-        <div class="d-flex justify-space-between align-center mb-4">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
             <MudText Typo="Typo.h5" Color="Color.Primary" Class="fw-bold">Registos Climáticos</MudText>
-            <div>
+            <MudStack Row="true">
                 <MudTooltip Text="Exportar Dados">
                     <MudIconButton Icon="@Icons.Material.Filled.FileDownload" Color="Color.Default" OnClick="DownloadExcel" />
                 </MudTooltip>
                 <MudTooltip Text="Atualizar Dados">
                     <MudIconButton Icon="@Icons.Material.Filled.Refresh" Color="Color.Default" OnClick="LoadData" />
                 </MudTooltip>
-            </div>
-        </div>
+            </MudStack>
+        </MudStack>
 
-        <!-- Secção de Filtros -->
+        <!-- Filters Section -->
         <MudExpansionPanels DisableBorders="true" Elevation="0" Class="mb-4">
             <MudExpansionPanel Text="Filtros" Icon="@Icons.Material.Filled.FilterList" IsInitiallyExpanded="true">
                 <MudGrid>
-                    <MudItem xs="12" md="3">
+                    <MudItem xs="12" sm="6" md="3">
                         <MudDateRangePicker Label="Data"
                                             @bind-DateRange="dateRange"
                                             AdornmentIcon="@Icons.Material.Filled.DateRange" />
                     </MudItem>
-                    <MudItem xs="12" md="2">
-                        <MudSelect T="int" Label="Risco de Temperatura" Class="mt-0"
+                    <MudItem xs="12" sm="6" md="2">
+                        <MudSelect T="int" Label="Risco de Temperatura"
                                    @bind-Value="tempRiskFilter" AdornmentIcon="@Icons.Material.Filled.Thermostat">
                             <MudSelectItem Value="-1">Todos os Níveis</MudSelectItem>
                             <MudSelectItem Value="0">Sem Risco (0)</MudSelectItem>
@@ -288,8 +273,8 @@
                             <MudSelectItem Value="3">Risco Alto (3)</MudSelectItem>
                         </MudSelect>
                     </MudItem>
-                    <MudItem xs="12" md="2">
-                        <MudSelect T="int" Label="Risco de Humidade" Class="mt-0"
+                    <MudItem xs="12" sm="6" md="2">
+                        <MudSelect T="int" Label="Risco de Humidade"
                                    @bind-Value="humidRiskFilter" AdornmentIcon="@Icons.Material.Filled.WaterDrop">
                             <MudSelectItem Value="-1">Todos os Níveis</MudSelectItem>
                             <MudSelectItem Value="0">Sem Risco (0)</MudSelectItem>
@@ -298,8 +283,8 @@
                             <MudSelectItem Value="3">Risco Alto (3)</MudSelectItem>
                         </MudSelect>
                     </MudItem>
-                    <MudItem xs="12" md="2">
-                        <MudSelect T="int" Label="Risco de Humidade Solo" Class="mt-0"
+                    <MudItem xs="12" sm="6" md="2">
+                        <MudSelect T="int" Label="Risco de Humidade Solo"
                                    @bind-Value="soilHumidRiskFilter" AdornmentIcon="@Icons.Material.Filled.Grass">
                             <MudSelectItem Value="-1">Todos os Níveis</MudSelectItem>
                             <MudSelectItem Value="0">Sem Risco (0)</MudSelectItem>
@@ -319,7 +304,6 @@
             </MudExpansionPanel>
         </MudExpansionPanels>
 
-        <!-- Tabela de Dados -->
         <div class="data-table">
             <MudTable Items="@registos" Dense="true" Hover="true" Bordered="false" Striped="true" Elevation="0"
                       Loading="@loading" LoadingProgressColor="Color.Primary" Height="450px"
@@ -414,6 +398,7 @@
         </div>
     </MudPaper>
 </MudContainer>
+
 
 <script>
     window.downloadFileFromStream = (fileName, contentType, base64Data) => {
